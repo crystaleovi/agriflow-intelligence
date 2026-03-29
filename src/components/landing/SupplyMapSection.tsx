@@ -1,23 +1,73 @@
+import { useState, useEffect } from "react";
+import { Shield } from "lucide-react";
+
 const NODES = [
-  { id: "johor", label: "Johor", sub: "Supply Hub", x: 310, y: 230, type: "farm" as const },
-  { id: "kl", label: "Kuala Lumpur", sub: "Primary Market", x: 250, y: 100, type: "market" as const },
-  { id: "penang", label: "Penang", sub: "Northern Market", x: 110, y: 30, type: "market" as const },
-  { id: "ipoh", label: "Ipoh", sub: "Central Market", x: 170, y: 65, type: "market" as const },
-  { id: "jb", label: "Johor Bahru", sub: "Southern Market", x: 400, y: 260, type: "market" as const },
+  { id: "johor", label: "Johor", sub: "Supply Hub", x: 310, y: 230, type: "farm" as const, tonnage: "42,000t" },
+  { id: "kl", label: "Kuala Lumpur", sub: "Primary Market", x: 250, y: 100, type: "market" as const, tonnage: "82,000t" },
+  { id: "penang", label: "Penang", sub: "Northern Market", x: 110, y: 30, type: "market" as const, tonnage: "28,000t" },
+  { id: "ipoh", label: "Ipoh", sub: "Central Market", x: 170, y: 65, type: "market" as const, tonnage: "15,000t" },
+  { id: "jb", label: "Johor Bahru", sub: "Southern Market", x: 400, y: 260, type: "market" as const, tonnage: "22,000t" },
 ];
 
-const ROUTES = [
-  { from: "johor", to: "kl", flow: "82k", status: "optimal" },
-  { from: "johor", to: "penang", flow: "28k", status: "optimal" },
-  { from: "johor", to: "ipoh", flow: "15k", status: "surplus" },
-  { from: "johor", to: "jb", flow: "22k", status: "optimal" },
+interface RouteData {
+  from: string;
+  to: string;
+  flow: string;
+  status: "optimal" | "surplus" | "redistribution";
+}
+
+const DEFAULT_ROUTES: RouteData[] = [
+  { from: "johor", to: "kl", flow: "82,000t", status: "optimal" },
+  { from: "johor", to: "penang", flow: "28,000t", status: "optimal" },
+  { from: "johor", to: "ipoh", flow: "15,000t", status: "surplus" },
+  { from: "johor", to: "jb", flow: "22,000t", status: "optimal" },
 ];
 
 function getNode(id: string) {
   return NODES.find((n) => n.id === id)!;
 }
 
+const statusColors = {
+  optimal: "hsl(152, 45%, 42%)",
+  surplus: "hsl(38, 92%, 55%)",
+  redistribution: "hsl(220, 70%, 55%)",
+};
+
+const statusLabels = {
+  optimal: "Optimal Flow",
+  surplus: "Surplus Risk",
+  redistribution: "AI Redistribution",
+};
+
 export function SupplyMapSection() {
+  const [routes, setRoutes] = useState<RouteData[]>(DEFAULT_ROUTES);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [networkScore, setNetworkScore] = useState({ before: 74, after: 74 });
+  const [showOptimized, setShowOptimized] = useState(false);
+
+  const runMapOptimization = () => {
+    setIsAnimating(true);
+    setShowOptimized(false);
+
+    setTimeout(() => {
+      setRoutes([
+        { from: "johor", to: "kl", flow: "68,000t", status: "optimal" },
+        { from: "johor", to: "penang", flow: "+12,400t", status: "redistribution" },
+        { from: "johor", to: "ipoh", flow: "+8,200t", status: "redistribution" },
+        { from: "johor", to: "jb", flow: "22,000t", status: "optimal" },
+      ]);
+      setNetworkScore({ before: 74, after: 91 });
+      setShowOptimized(true);
+      setIsAnimating(false);
+    }, 1500);
+  };
+
+  const resetMap = () => {
+    setRoutes(DEFAULT_ROUTES);
+    setShowOptimized(false);
+    setNetworkScore({ before: 74, after: 74 });
+  };
+
   return (
     <section id="map" className="py-24 px-6">
       <div className="mx-auto max-w-6xl">
@@ -29,52 +79,93 @@ export function SupplyMapSection() {
             National Supply Flow Intelligence
           </h2>
           <p className="mt-4 text-sm text-muted-foreground max-w-lg mx-auto">
-            Real-time visualization of food distribution across Malaysia's primary supply corridors.
+            Real-time visualization of food distribution across Malaysia's primary supply corridors with AI-driven route optimization.
           </p>
         </div>
 
         <div className="glass-card rounded-2xl p-8">
+          {/* Header controls */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-primary" /> Optimal Flow
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-warning" /> Surplus Risk
-              </span>
+              {Object.entries(statusLabels).map(([key, label]) => (
+                <span key={key} className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColors[key as keyof typeof statusColors] }} />
+                  {label}
+                </span>
+              ))}
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Live</span>
+            <div className="flex items-center gap-3">
+              {showOptimized && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 animate-fade-up">
+                  <span className="text-[10px] font-medium text-muted-foreground">Network Score:</span>
+                  <span className="text-[10px] text-muted-foreground">{networkScore.before}</span>
+                  <span className="text-[10px] text-muted-foreground">→</span>
+                  <span className="text-[10px] font-bold text-primary">{networkScore.after}</span>
+                </div>
+              )}
+              <button
+                onClick={showOptimized ? resetMap : runMapOptimization}
+                disabled={isAnimating}
+                className="text-[10px] font-medium px-3 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {isAnimating ? "Optimizing..." : showOptimized ? "Reset" : "Simulate Optimization"}
+              </button>
+            </div>
           </div>
 
           <svg viewBox="0 0 500 310" className="w-full" style={{ minHeight: 280 }}>
             <defs>
-              <marker id="arr-g" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
-                <path d="M0,0 L6,2.5 L0,5" fill="hsl(152, 45%, 42%)" opacity="0.6" />
-              </marker>
-              <marker id="arr-w" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
-                <path d="M0,0 L6,2.5 L0,5" fill="hsl(38, 92%, 55%)" opacity="0.6" />
-              </marker>
+              {Object.entries(statusColors).map(([key, color]) => (
+                <marker key={key} id={`arr-${key}`} markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
+                  <path d="M0,0 L6,2.5 L0,5" fill={color} opacity="0.7" />
+                </marker>
+              ))}
             </defs>
 
-            {ROUTES.map((route) => {
+            {routes.map((route, idx) => {
               const from = getNode(route.from);
               const to = getNode(route.to);
               const midX = (from.x + to.x) / 2;
               const midY = (from.y + to.y) / 2;
-              const isOptimal = route.status === "optimal";
+              const color = statusColors[route.status];
+              const isRedistribution = route.status === "redistribution";
 
               return (
-                <g key={`${route.from}-${route.to}`}>
+                <g key={`${route.from}-${route.to}`} className={isAnimating ? "animate-pulse" : ""}>
                   <line
                     x1={from.x} y1={from.y} x2={to.x} y2={to.y}
-                    stroke={isOptimal ? "hsl(152, 45%, 42%)" : "hsl(38, 92%, 55%)"}
-                    strokeWidth={isOptimal ? 2 : 1.5}
-                    opacity={0.35}
-                    markerEnd={`url(#${isOptimal ? "arr-g" : "arr-w"})`}
+                    stroke={color}
+                    strokeWidth={isRedistribution ? 3 : 2}
+                    opacity={isRedistribution ? 0.6 : 0.35}
+                    markerEnd={`url(#arr-${route.status})`}
+                    strokeDasharray={isRedistribution ? "8 4" : "none"}
+                    className={isRedistribution ? "animate-flow-dash" : ""}
                   />
-                  <text x={midX} y={midY - 8} textAnchor="middle" fontSize="8" fontWeight="500" className="fill-muted-foreground">
-                    {route.flow}t
-                  </text>
+                  {/* Flow label */}
+                  <g>
+                    <rect
+                      x={midX - 24}
+                      y={midY - 16}
+                      width={48}
+                      height={14}
+                      rx={4}
+                      fill={isRedistribution ? color : "hsl(0, 0%, 97%)"}
+                      fillOpacity={isRedistribution ? 0.15 : 0.9}
+                      stroke={color}
+                      strokeWidth={0.5}
+                      strokeOpacity={0.3}
+                    />
+                    <text
+                      x={midX}
+                      y={midY - 6}
+                      textAnchor="middle"
+                      fontSize="7"
+                      fontWeight={isRedistribution ? "700" : "500"}
+                      fill={isRedistribution ? color : "hsl(0, 0%, 45%)"}
+                    >
+                      {route.flow}
+                    </text>
+                  </g>
                 </g>
               );
             })}
@@ -83,6 +174,17 @@ export function SupplyMapSection() {
               const isFarm = node.type === "farm";
               return (
                 <g key={node.id}>
+                  {/* Pulse ring for farm */}
+                  {isFarm && (
+                    <circle
+                      cx={node.x} cy={node.y}
+                      r={24}
+                      fill="none"
+                      stroke="hsl(152, 45%, 42%)"
+                      strokeWidth={1}
+                      className="animate-pulse-glow"
+                    />
+                  )}
                   <circle
                     cx={node.x} cy={node.y}
                     r={isFarm ? 20 : 14}
@@ -102,10 +204,25 @@ export function SupplyMapSection() {
                   <text x={node.x} y={node.y + (isFarm ? 45 : 39)} textAnchor="middle" fontSize="7" className="fill-muted-foreground">
                     {node.sub}
                   </text>
+                  <text x={node.x} y={node.y + (isFarm ? 55 : 49)} textAnchor="middle" fontSize="6.5" fontWeight="500" className="fill-primary">
+                    {node.tonnage}
+                  </text>
                 </g>
               );
             })}
           </svg>
+
+          {/* Credibility footer */}
+          <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <Shield className="h-3 w-3 text-primary" />
+              <span>Time-series forecasting model · 93% confidence · Updated in real-time</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Live
+            </span>
+          </div>
         </div>
       </div>
     </section>
