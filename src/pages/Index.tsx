@@ -6,6 +6,8 @@ import { InsightsSection } from "@/components/landing/InsightsSection";
 import { ValueSection } from "@/components/landing/ValueSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { Navbar } from "@/components/landing/Navbar";
+import { SimulationControlSection } from "@/components/landing/SimulationControlSection";
+import { SystemArchitectureSection } from "@/components/landing/SystemArchitectureSection";
 
 const Index = () => {
   return (
@@ -13,9 +15,11 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <MetricsSection />
+      <SimulationControlSection />
       <AnalyticsSection />
       <SupplyMapSection />
       <InsightsSection />
+      <SystemArchitectureSection />
       <ValueSection />
       <FooterSection />
     </div>
