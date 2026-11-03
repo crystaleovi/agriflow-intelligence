@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Lovable project
 
 ## Project info
 
@@ -14,7 +14,7 @@ Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PRO
 
 Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
+**Use preferred IDE**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
@@ -60,13 +60,11 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## How to eploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
+## Can connect a custom domain to Lovable project?
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
